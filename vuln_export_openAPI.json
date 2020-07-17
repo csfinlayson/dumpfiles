@@ -1,0 +1,1198 @@
+{
+	"openapi": "3.0.0",
+	"info": {
+		"title": "Vulnerability Management",
+		"version": "1.0.0"
+	},
+	"security": [
+		{
+			"cloud": []
+		}
+	],
+	"servers": [
+		{
+			"url": "https://cloud.tenable.com"
+		}
+	],
+	"components": {
+		"securitySchemes": {
+			"cloud": {
+				"type": "apiKey",
+				"in": "header",
+				"name": "X-ApiKeys",
+				"description": "Format - accessKey=ACCESS_KEY;secretKey=SECRET_KEY"
+			}
+		}
+	},
+	"x-samples-languages": [
+		"python",
+		"curl",
+		"node",
+		"powershell",
+		"ruby",
+		"javascript",
+		"objectivec",
+		"java",
+		"php",
+		"csharp",
+		"go",
+		"swift",
+		"kotlin"
+	],
+	"paths": {
+		"/vulns/export": {
+			"post": {
+				"summary": "Export vulnerabilities",
+				"description": "Exports vulnerabilities that match the request criteria. \n\n**Important!**\nFor more information on using this endpoint, see guidelines and limitations described in [Retrieve Vulnerability Data from Tenable.io](doc:retrieve-vulnerability-data-from-tenableio).<p>Requires ADMINISTRATOR [64] user permissions. See [Permissions](doc:permissions).</p>",
+				"operationId": "exports-vulns-request-export",
+				"tags": [
+					"Exports"
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"num_assets": {
+										"type": "integer",
+										"description": "The maximum number of vulnerabilities per exported chunk. Note that this number does not represent the number of assets per chunk. Instead, it is equal to the number of assets times the number of vulnerabilities on each asset. The range of supported chunk sizes is a minimum of 50 (the default size) to a maximum of 5,000. If you specify a value outside this range, the system uses the upper- or lower-bound value.",
+										"format": "int32"
+									},
+									"include_unlicensed": {
+										"type": "boolean",
+										"description": "Specifies whether or not to include unlicensed assets. The default is `false` when no parameter is specified."
+									},
+									"filters": {
+										"type": "object",
+										"description": "Specifies filters for exported vulnerabilities. For example filters, see [Refine Vulnerability Export Requests](doc:refine-vulnerability-export-requests).",
+										"properties": {
+											"cidr_range": {
+												"description": "Restricts search for vulnerabilities to assets assigned an IP address within the specified CIDR range. For example, 0.0.0.0/0 restricts the search to 0.0.0.1 and 255.255.255.254.",
+												"type": "string"
+											},
+											"first_found": {
+												"type": "integer",
+												"description": "Returns vulnerabilities that were first found between the specified date (in Unix time) and now.",
+												"format": "int64"
+											},
+											"last_found": {
+												"type": "integer",
+												"description": "Returns vulnerabilities that were last found between the specified date (in Unix time) and now.",
+												"format": "int64"
+											},
+											"last_fixed": {
+												"type": "integer",
+												"description": "Returns vulnerabilities that were fixed between the specified date (in Unix time) and now.",
+												"format": "int64"
+											},
+											"plugin_family": {
+												"items": {
+													"type": "string"
+												},
+												"description": "The plugin family of the exported vulnerabilities. This filter is case-sensitive. If your request omits this parameter, the export includes all vulnerabilities, regardless of plugin family. For a list of supported plugin family values, use the /plugins/families endpoint.",
+												"type": "array"
+											},
+											"network_id": {
+												"type": "string",
+												"description": "The ID of the network object associated with scanners that detected the vulnerabilities you want to export. The default network ID is `00000000-0000-0000-0000-000000000000`. To determine the ID of a custom network, use the [GET /networks](ref:networks-list) endpoint. For more information about network objects, see [Manage Networks](doc:manage-networks-tio)."
+											},
+											"severity": {
+												"items": {
+													"type": "string"
+												},
+												"description": "The severity of the vulnerabilities to include in the export. Defaults to all severity levels. The severity of a vulnerability is defined using the Common Vulnerability Scoring System (CVSS) base score. Supported array values are:\n - info—The vulnerability has a CVSS score of 0.\n - low—The vulnerability has a CVSS score between 0.1 and 3.9.\n - medium—The vulnerability has a CVSS score between 4.0 and 6.9.\n - high—The vulnerability has a CVSS score between 7.0 and 9.9.\n - critical—The vulnerability has a CVSS score of 10.0.",
+												"type": "array"
+											},
+											"since": {
+												"type": "integer",
+												"description": "The start date (in Unix time) for the range of data you want to export. Use this filter in conjunction with the state filter as follows:\n - If the state filter is set to `open`, the export includes data for vulnerabilities that were first seen on or after the since date you specify.\n - If the state filter is set to `reopened`, the export includes data for vulnerabilities that were last seen on or after the since date you specify.\n - If the state filter is set to `fixed`, the export includes data for vulnerabilities that were fixed on or after the since date you specify.\n - If you do not include the state filter in your request, the export includes data for open vulnerabilities that were first seen on or after the since date you specify, AND reopened vulnerabilities that were last seen on or after the since date you specify.\n**Note:** This filter cannot be used in conjunction with the `first_found`, `last_found`, or `last_fixed` filters.",
+												"format": "int64"
+											},
+											"state": {
+												"items": {
+													"type": "string"
+												},
+												"description": "The state of the vulnerabilities you want the export to include. Supported, case-insensitive values are:\n - open—The vulnerability is currently present on a host.\n - reopened—The vulnerability was previously marked as fixed on a host, but has returned.\n - fixed—The vulnerability was present on a host, but is no longer detected.\n\nThis parameter is required if your request includes `first_found`, `last_found`, or `last_fixed` parameters. If your request omits this parameter, the export includes default states `open` and `reopened` only.",
+												"type": "array"
+											},
+											"tag.<category>": {
+												"items": {
+													"type": "string"
+												},
+												"description": "Returns vulnerabilities on assets with the specified asset tags. The filter is defined as \"tag\", a period (\".\"), and the tag category name. The value of the filter is an array of tag values. For more information about tags, see the <a href=\"https://docs.tenable.com/tenableio/vulnerabilitymanagement/Content/Settings/TagFormatAndApplication.htm\" target=\"_blank\">Tenable.io Vulnerability Management User Guide</a>.",
+												"type": "array"
+											},
+											"vpr_score": {
+												"description": "Returns vulnerabilities with the specified Vulnerability Priority Rating (VPR) score or scores. You can combine properties in this object to specify VPR ranges. For example, to export vulnerabilities greater than or equal to 9.0 but lesser than or equal to 9.9, the object would contain a `gte` property of 9.0 and an `lte` property of 9.9. \n\nFor more information about VPR, see <a href=\"https://docs.tenable.com/tenableio/vulnerabilitymanagement/Content/Analysis/RiskMetrics.htm\" target=\"_blank\">Severity vs. VPR</a> in the <i>Tenable.io Vulnerability Management User Guide</i>.",
+												"type": "object",
+												"properties": {
+													"eq": {
+														"type": "array",
+														"items": {
+															"type": "integer"
+														},
+														"description": "Returns vulnerabilities with a VPR equal to the specified score or scores. This property cannot be combined with the following range operators: `lt`, `gt`, `lte`, or `gte`."
+													},
+													"neq": {
+														"type": "array",
+														"items": {
+															"type": "integer"
+														},
+														"description": "Returns vulnerabilities with a VPR not equal to the specified score or scores. This property can be combined with the `eq` property."
+													},
+													"gt": {
+														"type": "integer",
+														"description": "Returns vulnerabilities with a VPR greater than the specified score. This property cannot be combined with the `eq` property."
+													},
+													"gte": {
+														"type": "integer",
+														"description": "Returns vulnerabilities with a VPR greater than or equal to the specified score. This property cannot be combined with the `eq` property."
+													},
+													"lt": {
+														"type": "integer",
+														"description": "Returns vulnerabilities with a VPR lesser than the specified score. This property cannot be combined with the `eq` property."
+													},
+													"lte": {
+														"type": "integer",
+														"description": "Returns vulnerabilities with a VPR lesser than or equal to the specified score. This property cannot be combined with the `eq` property."
+													}
+												}
+											}
+										}
+									}
+								},
+								"required": [
+									"num_assets"
+								]
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Returned if Tenable.io successfully queues an export request.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"export_uuid": {
+											"type": "string",
+											"description": "The UUID of the vulnerabilities export job."
+										}
+									}
+								},
+								"examples": {
+									"response": {
+										"value": {
+											"export_uuid": "73376c41-1508-46b7-8587-483d159cd956"
+										}
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Returned if your request message contains an invalid filter or a host.target filter that exceeds supported limits."
+					},
+					"403": {
+						"description": "Returned if you do not have permission to export vulnerabilities."
+					},
+					"429": {
+						"description": "Returned if you attempt to send too many requests in a specific period of time. For more information, see [Rate Limiting](doc:rate-limiting).",
+						"content": {
+							"text/html": {
+								"examples": {
+									"response": {
+										"value": "<html>\n\n<head>\n    <title>429 Too Many Requests</title>\n</head>\n\n<body bgcolor=\"white\">\n    <center>\n        <h1>429 Too Many Requests</h1>\n    </center>\n    <hr>\n    <center>nginx</center>\n</body>\n\n</html>"
+									}
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"cloud": []
+					}
+				]
+			}
+		},
+		"/vulns/export/{export_uuid}/status": {
+			"get": {
+				"summary": "Get vulnerabilities export status",
+				"description": "Returns the status of a vulnerability export request. Tenable.io processes the chunks in parallel, so the chunks may not complete in order.\n\n **Note:** Output for an individual plugin is limited to 1,024 KB (1 MB). <p>Requires ADMINISTRATOR [64] user permissions. See [Permissions](doc:permissions).</p>",
+				"operationId": "exports-vulns-export-status",
+				"tags": [
+					"Exports"
+				],
+				"parameters": [
+					{
+						"description": "The UUID for the export request.",
+						"required": true,
+						"name": "export_uuid",
+						"in": "path",
+						"schema": {
+							"type": "string",
+							"description": "The unique identifier of an export request. This value corresponds to the value returned in the [/vulns/export](ref:exports-vulns-request-export) response message."
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Returns the status of the specified export job.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": {
+											"type": "string",
+											"description": "The status of the export request. Possible values include:\n - QUEUED—Tenable.io has queued the export request until it completes other requests currently in process.\n - PROCESSING—Tenable.io has started processing the export request.\n - FINISHED—Tenable.io has completed processing the export request. The list of chunks is complete.\n - CANCELLED—An administrator has cancelled the export request.\n - ERROR—Tenable.io encountered an error while processing the export request. Tenable recommends that you retry the request. If the status persists on retry, contact Support."
+										},
+										"chunks_available": {
+											"type": "array",
+											"description": "A list of completed chunks available for download.",
+											"items": {
+												"type": "integer",
+												"format": "int32"
+											}
+										},
+										"chunks_failed": {
+											"type": "array",
+											"description": "A list of chunks for which the export process failed. If a chunk fails processing, submit the export request again. If the chunk continues to fail, contact Support.",
+											"items": {
+												"type": "integer",
+												"format": "int32"
+											}
+										},
+										"chunks_cancelled": {
+											"type": "array",
+											"description": "A list of chunks for which the export process was cancelled. If a chunk fails processing, Tenable.io automatically cancels all subsequent chunks queued for export in the same request. ",
+											"items": {
+												"type": "integer",
+												"format": "int32"
+											}
+										}
+									}
+								},
+								"examples": {
+									"response": {
+										"value": {
+											"status": "PROCESSING",
+											"chunks_available": [
+												1,
+												2,
+												3,
+												4,
+												5,
+												6,
+												8
+											],
+											"chunks_failed": [],
+											"chunks_cancelled": []
+										}
+									}
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Returned if you do not have permission to view the export status."
+					},
+					"404": {
+						"description": "Returned if Tenable.io cannot find an export job with the specified UUID."
+					},
+					"429": {
+						"description": "Returned if you attempt to send too many requests in a specific period of time. For more information, see [Rate Limiting](doc:rate-limiting).",
+						"content": {
+							"text/html": {
+								"examples": {
+									"response": {
+										"value": "<html>\n\n<head>\n    <title>429 Too Many Requests</title>\n</head>\n\n<body bgcolor=\"white\">\n    <center>\n        <h1>429 Too Many Requests</h1>\n    </center>\n    <hr>\n    <center>nginx</center>\n</body>\n\n</html>"
+									}
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"cloud": []
+					}
+				]
+			}
+		},
+		"/vulns/export/{export_uuid}/chunks/{chunk_id}": {
+			"get": {
+				"summary": "Download vulnerabilities chunk",
+				"description": "Downloads exported vulnerabilities chunk by ID as a JSON file. The response content type is `application/octet-stream`.\n\nChunks are available for download for up to 24 hours after they have been created. Tenable.io returns a 404 message for expired chunks. Tenable.io processes the chunks in parallel, so chunk IDs may not be arranged sequentially in the completed output. Export chunks do not include an attribute if that attribute is empty in the vulnerability record.\n\nA successful response message contains attributes that correspond to CVSS metrics; these metrics are described fully in the following documents:<ul><li>[A Complete Guide to the Common Vulnerability Scoring System, Version 2.0](https://www.first.org/cvss/v2/guide)</li><li>[Common Vulnerability Scoring System v3.0: Specification Document](https://www.first.org/cvss/specification-document)</li></ul><p>Requires ADMINISTRATOR [64] user permissions. See [Permissions](doc:permissions).</p>",
+				"operationId": "exports-vulns-download-chunk",
+				"tags": [
+					"Exports"
+				],
+				"parameters": [
+					{
+						"description": "The UUID of the export request.",
+						"required": true,
+						"name": "export_uuid",
+						"in": "path",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "The ID of the chunk you want to export.",
+						"required": true,
+						"name": "chunk_id",
+						"in": "path",
+						"schema": {
+							"type": "integer",
+							"format": "int32"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Returned if file is downloaded successfully.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"description": "A chunk of vulnerabilities information.",
+									"properties": {
+										"asset": {
+											"type": "array",
+											"description": "Information about the asset where the scan detected the vulnerability.",
+											"items": {
+												"type": "object",
+												"properties": {
+													"agent_uuid": {
+														"type": "string",
+														"description": "The UUID of the agent that performed the scan where the vulnerability was found."
+													},
+													"bios_uuid": {
+														"type": "string",
+														"description": "The BIOS UUID of the asset where the vulnerability was found."
+													},
+													"device_type": {
+														"type": "string",
+														"description": "The type of asset where the vulnerability was found."
+													},
+													"fqdn": {
+														"type": "string",
+														"description": "The fully-qualified domain name of the asset where a scan found the vulnerability."
+													},
+													"hostname": {
+														"type": "string",
+														"description": "The host name of the asset where a scan found the vulnerability."
+													},
+													"uuid": {
+														"type": "string",
+														"description": "The UUID of the asset where a scan found the vulnerability."
+													},
+													"ipv6": {
+														"type": "string",
+														"description": "The IPv6 address of the asset where a scan found the vulnerability."
+													},
+													"last_authenticated_results": {
+														"type": "string",
+														"description": "The last date credentials were used successfully to scan the asset."
+													},
+													"last_unauthenticated_results": {
+														"type": "string",
+														"description": "The last date when the asset was scanned without using credentials"
+													},
+													"mac_address": {
+														"type": "string",
+														"description": "The MAC address of the asset where a scan found the vulnerability."
+													},
+													"netbios_name": {
+														"type": "string",
+														"description": "The NETBIOS name of the asset where a scan found the vulnerability."
+													},
+													"netbios_workgroup": {
+														"type": "string",
+														"description": "The NETBIOS workgroup of the asset where a scan found the vulnerability."
+													},
+													"operating_system": {
+														"type": "string",
+														"description": "The operating system of the asset where a scan found the vulnerability."
+													},
+													"network_id": {
+														"type": "string",
+														"description": "The ID of the network object associated with scanners that identified the asset. The default network ID is `00000000-0000-0000-0000-000000000000`. For more information about network objects, see [Manage Networks](doc:manage-networks-tio)."
+													},
+													"tracked": {
+														"type": "boolean",
+														"description": "A value specifying whether Tenable.io tracks the asset in the asset management system. Tenable.io still assigns untracked assets identifiers in scan results, but these identifiers change with each new scan of the asset. This parameter is relevant to PCI-type scans and in certain cases where there is not enough information in a scan to identify the asset. Untracked assets appear in the scan history, but do not appear in workbenches or reports."
+													}
+												}
+											}
+										},
+										"output": {
+											"type": "string",
+											"description": "The text output of the Nessus scanner."
+										},
+										"plugin": {
+											"type": "array",
+											"description": "Information about the plugin that detected the vulnerability.",
+											"items": {
+												"type": "object",
+												"properties": {
+													"bid": {
+														"type": "integer",
+														"description": "The Bugtraq ID for the plugin."
+													},
+													"canvas_package": {
+														"type": "string",
+														"description": "The name of the CANVAS exploit pack that includes the vulnerability."
+													},
+													"checks_for_default_account": {
+														"type": "boolean",
+														"description": "A value specifying whether the plugin checks for default accounts."
+													},
+													"checks_for_malware": {
+														"type": "boolean",
+														"description": "A value specifying whether the plugin checks for malware."
+													},
+													"cpe": {
+														"type": "string",
+														"description": "The Common Platform Enumeration (CPE) number for the plugin."
+													},
+													"cve": {
+														"type": "string",
+														"description": "The Common Vulnerability and Exposure (CVE) ID for the plugin."
+													},
+													"cvss3_base_score": {
+														"type": "string",
+														"description": "The CVSSv3 base score (intrinsic and fundamental characteristics of a vulnerability that are constant over time and user environments)."
+													},
+													"cvss3_temporal_score": {
+														"type": "string",
+														"description": "The CVSSv3 temporal score (characteristics of a vulnerability that change over time but not among user environments)."
+													},
+													"cvss3_temporal_vector": {
+														"type": "array",
+														"description": "CVSSv3 temporal metrics for the vulnerability.",
+														"items": {
+															"type": "object",
+															"properties": {
+																"exploitability": {
+																	"type": "string",
+																	"description": "The CVSSv3 Exploit Maturity Code (E) for the vulnerability the plugin covers. Possible values include: \n - Unproven—Corresponds to the Unproven (U) value for the E metric\n - Proof-of-concept—Corresponds to the Proof-of-Concept (POC) value for the E metric\n - Functional—Corresponds to the Functional (F) value for the E metric\n - High—Corresponds to the High (H) value for the E metric\n - Not-defined—Corresponds to the Not Defined (ND) value for the E metric"
+																},
+																"remediation_level": {
+																	"type": "string",
+																	"description": "The CVSSv3 Remediation Level (RL) temporal metric for the vulnerability the plugin covers. Possible values include: \n - O—Official Fix\n - T—Temporary Fix\n - W—Workaround\n - U—Unavailable\n - X—Not Defined"
+																},
+																"report_confidence": {
+																	"type": "string",
+																	"description": "The CVSSv3 Report Confidence (RC) temporal metric for the vulnerability the plugin covers. Possible values include: \n - U—Unknown\n - R—Reasonable\n - C—Confirmed\n - X—Not Defined"
+																},
+																"raw": {
+																	"type": "string",
+																	"description": "The complete `cvss3_temporal_vector` metrics and result values for the vulnerability the plugin covers in a condensed and coded format. For example, `E:U/RL:OF/RC:C`."
+																}
+															}
+														}
+													},
+													"cvss3_vector": {
+														"type": "array",
+														"description": "Additional CVSSv3 metrics for the vulnerability.",
+														"items": {
+															"type": "object",
+															"properties": {
+																"access_vector": {
+																	"type": "string",
+																	"description": "The CVSSv2 Attack Vector (AV) metric for the vulnerability the plugin covers. Possible values include:\n - Network—Corresponds to the Network (N) value for the AV metric. \n - Adjacent Network—Corresponds to the Adjacent Network (A) value for the AV metric. \n - Local—Corresponds to the Local (L) value for the AV metric"
+																},
+																"access_complexity": {
+																	"type": "string",
+																	"description": "The CVSSv3 Access Complexity (AC) metric for the vulnerability the plugin covers. Possible values include: \n - H—High\n - M—Medium\n - L—Low"
+																},
+																"authentication": {
+																	"type": "string",
+																	"description": "The CVSSv2 Authentication (Au) metric for the vulnerability the plugin covers. Possible values include:\n - None required—Corresponds to the None (N) value for the Au metric. \n - Requires-single-instance—Corresponds to the Single (S) value for the Au metric. \n - Requires-multiple-instances—Corresponds to the Multiple (M) value for the Au metric"
+																},
+																"confidentiality_impact": {
+																	"type": "string",
+																	"description": "The CVSSv3 confidentiality impact metric of the vulnerability the plugin covers to the vulnerable component. Possible values include: \n - H—High\n - L—Low\n - N—None"
+																},
+																"integrity_impact": {
+																	"type": "string",
+																	"description": "The CVSSv3 integrity impact metric for the vulnerability the plugin covers. Possible values include:\n - H—High\n - L—Low\n - N—None"
+																},
+																"availability_impact": {
+																	"type": "string",
+																	"description": "The CVSSv2 availability impact metric for the vulnerability the plugin covers. Possible values include: \n - H—High\n - L—Low\n - N—None"
+																},
+																"raw": {
+																	"type": "string",
+																	"description": "The complete `cvss3_vector` metrics and result values for the vulnerability the plugin covers in a condensed and coded format. For example, `AV:N/AC:M/Au:N/C:C/I:C/A:C`."
+																}
+															}
+														}
+													},
+													"cvss_base_score": {
+														"type": "string",
+														"description": "The CVSSv2 base score (intrinsic and fundamental characteristics of a vulnerability that are constant over time and user environments)."
+													},
+													"cvss_temporal_score": {
+														"type": "string",
+														"description": "The CVSSv2 temporal score (characteristics of a vulnerability that change over time but not among user environments)."
+													},
+													"cvss_temporal_vector": {
+														"type": "array",
+														"description": "CVSSv2 temporal metrics for the vulnerability.",
+														"items": {
+															"type": "object",
+															"properties": {
+																"exploitability": {
+																	"type": "string",
+																	"description": "The CVSSv2 Exploitability (E) temporal metric for the vulnerability the plugin covers. Possible values include:\n - U—Unproven\n - POC—Proof-of-Concept\n - F—Functional\n - H—High\n - ND—Not Defined"
+																},
+																"remediation_level": {
+																	"type": "string",
+																	"description": "The CVSSv2 Remediation Level (RL) temporal metric for the vulnerability the plugin covers. Possible values include: \n - OF—Official Fix\n - TF—Temporary Fix\n - W—Workaround\n - U—Unavailable\n - ND—Not Defined"
+																},
+																"report_confidence": {
+																	"type": "string",
+																	"description": "The CVSSv2 Report Confidence (RC) temporal metric for the vulnerability the plugin covers. Possible values include: \n - UC—Unconfirmed\n - UR—Uncorroborated\n - C—Confirmed\n - ND—Not Defined"
+																},
+																"raw": {
+																	"type": "string",
+																	"description": "The complete `cvss_temporal_vector` metrics and result values for the vulnerability the plugin covers in a condensed and coded format. For example, `E:U/RL:OF/RC:C`."
+																}
+															}
+														}
+													},
+													"cvss_vector": {
+														"type": "array",
+														"description": "Additional CVSSv2 metrics for the vulnerability.",
+														"items": {
+															"type": "object",
+															"properties": {
+																"access_vector": {
+																	"type": "string",
+																	"description": "The CVSSv2 Access Vector (AV) metric for the vulnerability the plugin covers. Possible values include: \n - L—Local\n - A—Adjacent Network\n - N—Network"
+																},
+																"access_complexity": {
+																	"type": "string",
+																	"description": "The CVSSv2 Access Complexity (AC) metric for the vulnerability the plugin covers. Possible values include:\n - H—High\n - M—Medium\n - L—Low"
+																},
+																"authentication": {
+																	"type": "string",
+																	"description": "The CVSSv2 Authentication (Au) metric for the vulnerability the plugin covers. Possible values include: \n - N—None\n - S—Single\n - M—Multiple"
+																},
+																"confidentiality_impact": {
+																	"type": "string",
+																	"description": "The CVSSv2 confidentiality impact metric for the vulnerability the plugin covers. Possible values include: \n - N—None\n - P—Partial\n - C—Complete"
+																},
+																"integrity_impact": {
+																	"type": "string",
+																	"description": "The CVSSv2 integrity impact metric for the vulnerability the plugin covers. Possible values include: \n - N—None\n - P—Partial\n - C—Complete"
+																},
+																"availability_impact": {
+																	"type": "string",
+																	"description": "The CVSSv2 availability impact metric for the vulnerability the plugin covers. Possible values include: \n - N—None\n - P—Partial\n - C—Complete"
+																},
+																"raw": {
+																	"type": "string",
+																	"description": "The complete `cvss_vector` metrics and result values for the vulnerability the plugin covers in a condensed and coded format. For example, `AV:N/AC:M/Au:N/C:C/I:C/A:C`."
+																}
+															}
+														}
+													},
+													"d2_elliot_name": {
+														"type": "string",
+														"description": "The name of the exploit in the D2 Elliot Web Exploitation framework."
+													},
+													"description": {
+														"type": "string",
+														"description": "Full text description of the vulnerability."
+													},
+													"exploit_available": {
+														"type": "boolean",
+														"description": "A value specifying whether a public exploit exists for the vulnerability."
+													},
+													"exploit_framework_canvas": {
+														"type": "boolean",
+														"description": "A value specifying whether an exploit exists in the Immunity CANVAS framework."
+													},
+													"exploit_framework_core": {
+														"type": "boolean",
+														"description": "A value specifying whether  an exploit exists in the CORE Impact framework."
+													},
+													"exploit_framework_d2_elliot": {
+														"type": "boolean",
+														"description": "A value specifying whether  an exploit exists in the D2 Elliot Web Exploitation framework."
+													},
+													"exploit_framework_exploithub": {
+														"type": "boolean",
+														"description": "A value specifying whether  an exploit exists in the ExploitHub framework."
+													},
+													"exploit_framework_metasploit": {
+														"type": "boolean",
+														"description": "A value specifying whether  an exploit exists in the Metasploit framework."
+													},
+													"exploitability_ease": {
+														"type": "string",
+														"description": "Description of how easy it is to exploit the issue."
+													},
+													"exploited_by_malware": {
+														"type": "boolean",
+														"description": "The vulnerability discovered by this plugin is known to be exploited by malware."
+													},
+													"exploited_by_nessus": {
+														"type": "boolean",
+														"description": "A value specifying whether Nessus exploited the vulnerability during the process of identification."
+													},
+													"exploithub_sku": {
+														"type": "string",
+														"description": "The SKU number of the exploit in the ExploitHub framework."
+													},
+													"family": {
+														"type": "string",
+														"description": "The family to which plugin belongs."
+													},
+													"family_id": {
+														"type": "integer",
+														"description": "The ID of the plugin family."
+													},
+													"has_patch": {
+														"type": "boolean",
+														"description": "A value specifying whether the vendor has published a patch for the vulnerability."
+													},
+													"id": {
+														"type": "integer",
+														"description": "The ID of the plugin that identified the vulnerability."
+													},
+													"in_the_news": {
+														"type": "boolean",
+														"description": "A value specifying whether this plugin has received media attention (for example, ShellShock, Meltdown)."
+													},
+													"metasploit_name": {
+														"type": "string",
+														"description": "The name of the related exploit in the Metasploit framework."
+													},
+													"ms_bulletin": {
+														"type": "string",
+														"description": "The Microsoft security bulletin that the plugin covers."
+													},
+													"name": {
+														"type": "string",
+														"description": "The name of the plugin that identified the vulnerability."
+													},
+													"patch_publication_date": {
+														"type": "string",
+														"description": "The date on which the vendor published a patch for the vulnerability."
+													},
+													"modification_date": {
+														"type": "string",
+														"description": "The date on which the plugin was last modified."
+													},
+													"publication_date": {
+														"type": "string",
+														"description": "The date on which the plugin was published."
+													},
+													"risk_factor": {
+														"type": "string",
+														"description": "The risk factor associated with the plugin. Possible values are: `Low`, `Medium`, `High`, or `Critical`. See the `risk_factor` attribute in [Tenable Plugin Attributes](doc:tenable-plugin-attributes)."
+													},
+													"see_also": {
+														"type": "string",
+														"description": "Links to external websites that contain helpful information about the vulnerability."
+													},
+													"solution": {
+														"type": "string",
+														"description": "Remediation information for the vulnerability."
+													},
+													"stig_severity": {
+														"type": "string",
+														"description": "Security Technical Implementation Guide (STIG) severity code for the vulnerability."
+													},
+													"synopsis": {
+														"type": "string",
+														"description": "Brief description of the plugin or vulnerability."
+													},
+													"type": {
+														"type": "string",
+														"description": "The general type of plugin check (for example, `local` or `remote`)."
+													},
+													"unsupported_by_vendor": {
+														"type": "boolean",
+														"description": "Software found by this plugin is unsupported by the software's vendor (for example, Windows 95 or Firefox 3)."
+													},
+													"usn": {
+														"type": "string",
+														"description": "Ubuntu security notice that the plugin covers."
+													},
+													"version": {
+														"type": "string",
+														"description": "The version of the plugin used to perform the check."
+													},
+													"vuln_publication_date": {
+														"type": "string",
+														"description": "The publication date of the plugin."
+													},
+													"xrefs": {
+														"type": "string",
+														"description": "External references (for example, OSVDB, Secunia, or MS Advisory)."
+													},
+													"vpr": {
+														"type": "object",
+														"description": "Information about the Vulnerability Priority Rating (VPR) for the vulnerability.",
+														"properties": {
+															"score": {
+																"type": "integer",
+																"description": "The Vulnerability Priority Rating (VPR) for the vulnerability. If a plugin is designed to detect multiple vulnerabilities, the VPR represents the highest value calculated for a vulnerability associated with the plugin. For more information, see <a href=\"https://docs.tenable.com/tenableio/vulnerabilitymanagement/Content/Analysis/RiskMetrics.htm\" target=\"_blank\">Severity vs. VPR</a> in the <i>Tenable.io Vulnerability Management User Guide</i>.",
+																"format": "int32"
+															},
+															"drivers": {
+																"type": "object",
+																"description": "The key drivers Tenable uses to calculate a vulnerability's VPR. For more information, see [Vulnerability Priority Rating Drivers](doc:vpr-drivers-tio).",
+																"properties": {}
+															},
+															"updated": {
+																"type": "string",
+																"description": "The ISO timestamp when Tenable.io last imported the VPR for this vulnerability. Tenable.io imports a VPR value the first time you scan a vulnerability on your network. Then, Tenable.io automatically re-imports new and updated VPR values daily."
+															}
+														}
+													}
+												}
+											}
+										},
+										"port": {
+											"type": "array",
+											"description": "Information about the port the scanner used to connect to the asset.",
+											"items": {
+												"type": "object",
+												"properties": {
+													"port": {
+														"type": "string",
+														"description": "The port the scanner used to communicate with the asset."
+													},
+													"protocol": {
+														"type": "string",
+														"description": "The protocol the scanner used to communicate with the asset."
+													},
+													"service": {
+														"type": "string",
+														"description": "The service the scanner used to communicate with the asset."
+													}
+												}
+											}
+										},
+										"recast_reason": {
+											"type": "string",
+											"description": "The text that appears in the Comment field of the recast rule in the Tenable.io user interface."
+										},
+										"recast_rule_uuid": {
+											"type": "string",
+											"description": "The UUID of the recast rule that applies to the plugin."
+										},
+										"scan": {
+											"type": "array",
+											"description": "Information about the latest scan that detected the vulnerability.",
+											"items": {
+												"type": "object",
+												"properties": {
+													"completed_at": {
+														"type": "string",
+														"description": "The ISO timestamp when the scan completed."
+													},
+													"schedule_uuid": {
+														"type": "string",
+														"description": "The schedule UUID for the scan that found the vulnerability."
+													},
+													"started_at": {
+														"type": "string",
+														"description": "The ISO timestamp when the scan started."
+													},
+													"uuid": {
+														"type": "string",
+														"description": "The UUID of the scan that found the vulnerability."
+													}
+												}
+											}
+										},
+										"severity": {
+											"type": "string",
+											"description": "The severity of the vulnerability as defined using the Common Vulnerability Scoring System (CVSS) base score. Possible values include `info` (CVSS score of 0), `low` (CVSS score between 0.1 and 3.9), `medium` (CVSS score between 4.0 and 6.9), `high` (CVSS score between 7.0 and 9.9), and `critical` (CVSS score of 10.0)."
+										},
+										"severity_id": {
+											"type": "integer",
+											"format": "int32",
+											"description": "The code for the severity assigned when a user recast the risk associated with the vulnerability. Possible values include: \n - 0—The vulnerability has a CVSS score of 0, which corresponds to the \"info\" severity level.\n - 1—The vulnerability has a CVSS score between 0.1 and 3.9, which corresponds to the \"low\" severity level.\n - 2—The vulnerability has a CVSS score between 4.0 and 6.9, which corresponds to the \"medium\" severity level.\n - 3—The vulnerability has a CVSS score between 7.0 and 9.9, which corresponds to the \"high\" severity level.\n - 4—The vulnerability has a CVSS score of 10.0, which corresponds to the \"critical\" severity level."
+										},
+										"severity_default_id": {
+											"type": "integer",
+											"format": "int32",
+											"description": "The code for the severity originally assigned to a vulnerability before a user recast the risk associated with the vulnerability. Possible values are the same as for the `severity_id` attribute."
+										},
+										"severity_modification_type": {
+											"type": "string",
+											"description": "The type of modification a user made to the vulnerability's severity. Possible values include: \n - none—No modification has been made.\n - recasted—A user in the Tenable.io user interface has recast the risk associated with the vulnerability. \n - accepted—A user in the Tenable.io user interface has accepted the risk associated with the vulnerability. \n\nFor more information about recast and accept rules, see the <i>Tenable.io Vulnerability Management User Guide</i>."
+										},
+										"first_found": {
+											"type": "string",
+											"description": "The ISO date when a scan first detected the vulnerability on the asset."
+										},
+										"last_fixed": {
+											"type": "string",
+											"description": "The ISO date when a scan no longer detects the previously detected vulnerability on the asset."
+										},
+										"last_found": {
+											"type": "string",
+											"description": "The ISO date when a scan last detected the vulnerability on the asset."
+										},
+										"state": {
+											"type": "string",
+											"description": "The state of the vulnerability as determined by the Tenable.io state service. Possible values include: \n - open—The vulnerability is currently present on an asset. \n - reopened—The vulnerability was previously marked as fixed on an asset, but has been detected again by a new scan. \n - fixed—The vulnerability was present on an asset, but is no longer detected."
+										}
+									}
+								},
+								"examples": {
+									"response": {
+										"value": {
+											"asset": {
+												"fqdn": "example.com",
+												"hostname": "172.106.217.225",
+												"uuid": "150dee8f-6090-4a9c-907c-54a1c39ddab0",
+												"ipv4": "172.156.65.8",
+												"operating_system": [
+													"Apple Mac OS X 10.5.8"
+												],
+												"network_id": "00000000-0000-0000-0000-000000000000",
+												"tracked": true
+											},
+											"output": "The observed version of Google Chrome is : \n Chrome/21.0.1180.90",
+											"plugin": {
+												"cve": [
+													"CVE-2016-1620",
+													"CVE-2016-1614",
+													"CVE-2016-1613",
+													"CVE-2016-1612",
+													"CVE-2016-1618",
+													"CVE-2016-1617",
+													"CVE-2016-1616",
+													"CVE-2016-1615",
+													"CVE-2016-1619"
+												],
+												"cvss_base_score": 9.3,
+												"cvss_temporal_score": 6.9,
+												"cvss_temporal_vector": {
+													"exploitability": "Unproven",
+													"remediation_level": "Official-fix",
+													"report_confidence": "Confirmed",
+													"raw": "E:U/RL:OF/RC:C"
+												},
+												"cvss_vector": {
+													"access_complexity": "Medium",
+													"access_vector": "Network",
+													"authentication": "None required",
+													"confidentiality_impact": "Complete",
+													"integrity_impact": "Complete",
+													"availability_impact": "Complete",
+													"raw": "AV:N/AC:M/Au:N/C:C/I:C/A:C"
+												},
+												"description": "The version of Google Chrome on the remote host is prior to 48.0.2564.82 and is affected by the following vulnerabilities: \n\n - An unspecified vulnerability exists in Google V8 when handling compatible receiver checks hidden behind receptors.  An attacker can exploit this to have an unspecified impact.  No other details are available. (CVE-2016-1612)\n - A use-after-free error exists in `PDFium` due to improper invalidation of `IPWL_FocusHandler` and `IPWL_Provider` upon destruction.  An attacker can exploit this to dereference already freed memory, resulting in the execution of arbitrary code. (CVE-2016-1613)\n - An unspecified vulnerability exists in `Blink` that is related to the handling of bitmaps.  An attacker can exploit this to access sensitive information.  No other details are available. (CVE-2016-1614)\n - An unspecified vulnerability exists in `omnibox` that is related to origin confusion.  An attacker can exploit this to have an unspecified impact.  No other details are available. (CVE-2016-1615)\n - An unspecified vulnerability exists that allows an attacker to spoof a displayed URL.  No other details are available. (CVE-2016-1616)\n - An unspecified vulnerability exists that is related to history sniffing with HSTS and CSP. No other details are available. (CVE-2016-1617)\n - A flaw exists in `Blink` due to the weak generation of random numbers by the ARC4-based random number generator.  An attacker can exploit this to gain access to sensitive information.  No other details are available. (CVE-2016-1618)\n - An out-of-bounds read error exists in `PDFium` in file `fx_codec_jpx_opj.cpp` in the `sycc4{22,44}_to_rgb()` functions. An attacker can exploit this to cause a denial of service by crashing the application linked using the library. (CVE-2016-1619)\n - Multiple vulnerabilities exist, the most serious of which allow an attacker to execute arbitrary code via a crafted web page. (CVE-2016-1620)\n - A flaw in `objects.cc` is triggered when handling cleared `WeakCells`, which may allow a context-dependent attacker to have an unspecified impact. No further details have been provided. (CVE-2016-2051)",
+												"family": "Web Clients",
+												"family_id": 1000020,
+												"has_patch": false,
+												"id": 9062,
+												"name": "Google Chrome &lt; 48.0.2564.82 Multiple Vulnerabilities",
+												"risk_factor": "HIGH",
+												"see_also": [
+													"http://googlechromereleases.blogspot.com/2016/01/beta-channel-update_20.html"
+												],
+												"solution": "Update the Chrome browser to 48.0.2564.82 or later.",
+												"synopsis": "The remote host is utilizing a web browser that is affected by multiple vulnerabilities.",
+												"vpr": {
+													"score": 5.9,
+													"drivers": {
+														"age_of_vuln": {
+															"lower_bound": 366,
+															"upper_bound": 730
+														},
+														"exploit_code_maturity": "UNPROVEN",
+														"cvss_impact_score_predicted": false,
+														"cvss3_impact_score": 5.9,
+														"threat_intensity_last28": "VERY_LOW",
+														"threat_sources_last28": [
+															"No recorded events"
+														],
+														"product_coverage": "LOW"
+													},
+													"updated": "2019-12-31T10:08:58Z"
+												}
+											},
+											"port": {
+												"port": 0,
+												"protocol": "TCP"
+											},
+											"scan": {
+												"completed_at": "2018-12-31T20:59:47Z",
+												"schedule_uuid": "413765fb-e941-7eea-ca8b-0a79182a2806e1b6640fe8a2217b",
+												"started_at": "2018-12-31T20:59:47Z",
+												"uuid": "e2c070ae-ec37-d9ff-f003-2e89b7e5e1ab8af3a9957a077904"
+											},
+											"severity": "high",
+											"severity_id": 3,
+											"severity_default_id": 3,
+											"severity_modification_type": "NONE",
+											"first_found": "2018-12-31T20:59:47Z",
+											"last_found": "2018-12-31T20:59:47Z",
+											"state": "OPEN"
+										}
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Returned if the chunk ID is invalid or the chunk is not ready for download."
+					},
+					"403": {
+						"description": "Returned if you do not have permission to export vulnerabilities."
+					},
+					"404": {
+						"description": "Returned if Tenable.io cannot find a chunk with the specified UUID."
+					},
+					"429": {
+						"description": "Returned if you attempt to send too many requests in a specific period of time. For more information, see [Rate Limiting](doc:rate-limiting).",
+						"content": {
+							"text/html": {
+								"examples": {
+									"response": {
+										"value": "<html>\n\n<head>\n    <title>429 Too Many Requests</title>\n</head>\n\n<body bgcolor=\"white\">\n    <center>\n        <h1>429 Too Many Requests</h1>\n    </center>\n    <hr>\n    <center>nginx</center>\n</body>\n\n</html>"
+									}
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"cloud": []
+					}
+				]
+			}
+		},
+		"/vulns/export/{export_uuid}/cancel": {
+			"post": {
+				"summary": "Cancel vuln export",
+				"description": "Cancels the specified export job. If you cancel an export job, Tenable.io finishes any chunk that is currently processing, terminates the processing of any unprocessed chunks, and updates the job status to `CANCELLED`. If a cancelled job includes completed chunks, you can download those chunks for three days after cancellation. <p>Requires ADMINISTRATOR [64] user permissions. See [Permissions](doc:permissions).</p>",
+				"operationId": "exports-vulns-export-cancel",
+				"tags": [
+					"Exports"
+				],
+				"parameters": [
+					{
+						"description": "The UUID for the export request.",
+						"required": true,
+						"name": "export_uuid",
+						"in": "path",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Returned if Tenable.io successfully cancels the specified export request.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": {
+											"type": "string",
+											"description": "Text describing the export job status, `CANCELLED`."
+										}
+									}
+								},
+								"examples": {
+									"response": {
+										"value": {
+											"status": "CANCELLED"
+										}
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Returned if Tenable.io cannot cancel the request."
+					},
+					"401": {
+						"description": "Returned if Tenable.io cannot find an export job for the specified UUID."
+					},
+					"403": {
+						"description": "Returned if you do not have permission to cancel export jobs."
+					},
+					"404": {
+						"description": "Returned if Tenable.io cannot find an export with the specified UUID."
+					},
+					"429": {
+						"description": "Returned if you attempt to send too many requests in a specific period of time. For more information, see [Rate Limiting](doc:rate-limiting).",
+						"content": {
+							"text/html": {
+								"examples": {
+									"response": {
+										"value": "<html>\n\n<head>\n    <title>429 Too Many Requests</title>\n</head>\n\n<body bgcolor=\"white\">\n    <center>\n        <h1>429 Too Many Requests</h1>\n    </center>\n    <hr>\n    <center>nginx</center>\n</body>\n\n</html>"
+									}
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"cloud": []
+					}
+				]
+			}
+		},
+		"/vulns/export/status": {
+			"get": {
+				"summary": "Get vuln export jobs",
+				"description": "Retrieves a list of vulnerability export jobs. This list includes the 1,000 most recent export jobs regardless of status. However, this list includes completed jobs only if the job completed in the previous three days. <p>Requires ADMINISTRATOR [64] user permissions. See [Permissions](doc:permissions).</p>",
+				"operationId": "exports-vulns-export-status-recent",
+				"tags": [
+					"Exports"
+				],
+				"responses": {
+					"200": {
+						"description": "Returns a list of recent vulnerability export jobs.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"exports": {
+											"type": "array",
+											"items": {
+												"description": "Information about the export job.",
+												"type": "object",
+												"properties": {
+													"uuid": {
+														"type": "string",
+														"description": "The UUID for the export request."
+													},
+													"status": {
+														"type": "string",
+														"description": "The status of the export request. Possible values include:\n - QUEUED—Tenable.io has queued the export request until it completes other requests currently in process.\n - PROCESSING—Tenable.io has started processing the export request.\n - FINISHED—Tenable.io has completed processing the export request. The list of chunks is complete.\n - CANCELLED—An administrator has cancelled the export request.\n - ERROR—Tenable.io encountered an error while processing the export request. Tenable recommends that you retry the request. If the status persists on retry, contact Support."
+													},
+													"chunks_available": {
+														"type": "array",
+														"description": "A list of completed chunks available for download.",
+														"items": {
+															"type": "integer"
+														}
+													},
+													"total_chunks": {
+														"type": "integer",
+														"description": "The total number of chunks associated with the export job as a whole."
+													},
+													"finished_chunks": {
+														"type": "integer",
+														"description": "The number of chunks that have been processed and are available for download."
+													},
+													"filters": {
+														"type": "object",
+														"description": "The filters used in the export job request. For a list of possible filters, see the [POST /vulns/export](ref:exports-vulns-export-request-export) and [POST /assets/export](ref:exports-assets-request-export) endpoints.",
+														"properties": {}
+													},
+													"num_assets_per_chunk": {
+														"type": "integer",
+														"description": "The number of assets contained in each export chunk."
+													},
+													"created": {
+														"type": "integer",
+														"description": "The Unix timestamp when the export job was created."
+													}
+												}
+											}
+										}
+									}
+								},
+								"examples": {
+									"response": {
+										"value": {
+											"exports": [
+												{
+													"uuid": "5174760d-c669-4185-b8ee-e99148be1a37",
+													"status": "FINISHED",
+													"total_chunks": 0,
+													"finished_chunks": 0,
+													"filters": {
+														"state": [
+															"OPEN",
+															"REOPENED"
+														],
+														"tags": {},
+														"cidr_range": "172.204.81.57/24",
+														"since": 0,
+														"first_found": 0,
+														"last_found": 0,
+														"last_fixed": 0
+													},
+													"num_assets_per_chunk": 0,
+													"created": 1566420439782
+												},
+												{
+													"uuid": "9ec1b0d5-26f1-4078-9929-9eccd8a2e514",
+													"status": "FINISHED",
+													"total_chunks": 5,
+													"finished_chunks": 5,
+													"filters": {
+														"since": 0,
+														"first_found": 0,
+														"last_found": 0,
+														"last_fixed": 0
+													},
+													"num_assets_per_chunk": 5,
+													"created": 1566418722831
+												}
+											]
+										}
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Returned if your request message is invalid."
+					},
+					"403": {
+						"description": "Returned if you do not have permissions for the request."
+					},
+					"429": {
+						"description": "Returned if you attempt to send too many requests in a specific period of time. For more information, see [Rate Limiting](doc:rate-limiting).",
+						"content": {
+							"text/html": {
+								"examples": {
+									"response": {
+										"value": "<html>\n\n<head>\n    <title>429 Too Many Requests</title>\n</head>\n\n<body bgcolor=\"white\">\n    <center>\n        <h1>429 Too Many Requests</h1>\n    </center>\n    <hr>\n    <center>nginx</center>\n</body>\n\n</html>"
+									}
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"cloud": []
+					}
+				]
+			}
+		}
+	},
+	"x-explorer-enabled": true,
+	"x-proxy-enabled": true,
+	"x-samples-enabled": true
+}
